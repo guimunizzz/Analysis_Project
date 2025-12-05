@@ -8,6 +8,7 @@ from services.shodan import ShodanService
 from services.greynoise import GreyNoiseService
 from services.ipqualityscore import IPQualityScoreService
 from utils.validators import validate_ip
+from styles.theme import get_common_styles, get_sidebar_logo_html
 import time
 
 # -------------------------------------------------------------------
@@ -20,129 +21,14 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------------
-# CSS GLOBAL (mesmo padrão para todas as páginas)
+# CSS GLOBAL (usando tema centralizado)
 # -------------------------------------------------------------------
+st.markdown(get_common_styles(), unsafe_allow_html=True)
+
+# Additional styles specific to IP Analysis page
 st.markdown(
     """
     <style>
-    .stApp {
-        background: radial-gradient(circle at top, #020617 0, #020617 55%);
-        color: #f9fafb;  /* texto principal branco */
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    .main > div {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
-    }
-
-    /* Shell principal de cada página */
-    .page-shell {
-        background: #020617;
-        border-radius: 18px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.85);
-        padding: 1.6rem 1.4rem 1.9rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .page-shell-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-        margin-bottom: 1rem;
-    }
-
-    .page-shell-title {
-        font-size: 1.6rem;
-        font-weight: 650;
-        letter-spacing: -0.03em;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        color: #f9fafb;  /* título branco */
-    }
-
-    .page-shell-subtitle {
-        color: #e5e7eb;  /* subtítulo quase branco */
-        font-size: 0.9rem;
-    }
-
-    .page-shell-badge {
-        font-size: 0.68rem;
-        padding: 0.2rem 0.7rem;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.6);
-        background: rgba(15, 23, 42, 0.96);
-        color: #e5e7eb;
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-    }
-
-    /* Cards genéricos */
-    .card-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-        gap: 0.85rem;
-        margin-top: 1.1rem;
-    }
-
-    .card {
-        background: #020617;
-        border-radius: 14px;
-        border: 1px solid rgba(148, 163, 184, 0.5);
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
-        padding: 0.9rem 1rem;
-    }
-
-    .card-muted {
-        background: #020617;
-        border-radius: 14px;
-        border: 1px dashed rgba(148, 163, 184, 0.45);
-        box-shadow: none;
-        padding: 0.9rem 1rem;
-    }
-
-    .card-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        color: #cbd5f5;  /* label clara */
-        margin-bottom: 0.3rem;
-    }
-
-    .card-value {
-        font-size: 1.35rem;
-        font-weight: 650;
-        color: #ffffff;  /* valor branco */
-    }
-
-    .card-sub {
-        font-size: 0.8rem;
-        color: #e5e7eb;  /* subtítulo claro */
-        margin-top: 0.25rem;
-    }
-
-    /* Status e badges */
-    .status-ok   { color: #22c55e; }
-    .status-warn { color: #facc15; }
-    .status-bad  { color: #fca5a5; }
-
-    .badge-soft {
-        font-size: 0.72rem;
-        padding: 0.15rem 0.6rem;
-        border-radius: 999px;
-        background: rgba(15,23,42,0.96);
-        border: 1px solid rgba(148,163,184,0.5);
-        color: #e5e7eb;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        margin-top: 0.35rem;
-    }
-
     /* Input IP */
     .ip-input-label {
         font-size: 0.8rem;
@@ -247,15 +133,6 @@ st.markdown(
         gap: 0.3rem;
         margin-right: 0.35rem;
         margin-bottom: 0.25rem;
-    }
-
-    /* Botões secundários (limpar, etc.) */
-    .stButton>button[kind="secondary"] {
-        border-radius: 999px !important;
-        background: transparent !important;
-        border: 1px solid rgba(148,163,184,0.5) !important;
-        color: #e5e7eb !important;
-        font-size: 0.85rem !important;
     }
     </style>
     """,
