@@ -11,7 +11,7 @@ from styles.theme import get_common_styles, get_sidebar_logo_html
 
 # Configuração da página
 st.set_page_config(
-    page_title="The Operator - Streamlit",
+    page_title="Sec Analysis - Streamlit",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -36,7 +36,7 @@ def main():
     initialize_session()
     
     # Header
-    st.title("🛡️ The Operator - Inteligência de Ameaças")
+    st.title("🛡️ Sec Analysis - Inteligência de Ameaças")
     st.markdown("Plataforma de análise de segurança com integração a múltiplas fontes")
     
     # Verificar se APIs estão configuradas
@@ -97,7 +97,7 @@ def main():
             <div class="page-shell-header">
                 <div>
                     <div class="page-shell-title">
-                        🚀 Bem-vindo ao The Operator
+                        🚀 Bem-vindo ao Sec Analysis
                     </div>
                     <div class="page-shell-subtitle">
                         Plataforma integrada de inteligência de ameaças para análise de segurança

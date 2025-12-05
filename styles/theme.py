@@ -184,18 +184,54 @@ def get_common_styles():
 def get_sidebar_logo_html():
     """
     Returns the HTML for the sidebar logo.
+    Supports SVG, PNG, JPG/JPEG and WEBP. Falls back to a built-in SVG if no file is found.
     This should be added at the top of the sidebar in all pages.
     """
-    # Try to load the logo
-    logo_path = Path(__file__).parent.parent / "assets" / "logo.svg"
-    
-    if logo_path.exists():
-        with open(logo_path, "r", encoding="utf-8") as f:
-            svg_content = f.read()
-            # Encode to base64 for embedding
-            svg_b64 = base64.b64encode(svg_content.encode()).decode()
-            logo_src = f"data:image/svg+xml;base64,{svg_b64}"
-    else:
+    assets_dir = Path(__file__).parent.parent / "assets"
+
+    # Candidate filenames in priority order
+    candidates = [
+        assets_dir / "NCTECH.png",
+        assets_dir / "logo.svg",
+        assets_dir / "logo.png",
+        assets_dir / "logo.jpg",
+        assets_dir / "logo.jpeg",
+        assets_dir / "logo.webp",
+    ]
+
+    logo_src = None
+
+    # Find first existing candidate and encode with correct mime
+    for path in candidates:
+        if path.exists():
+            ext = path.suffix.lower()
+            try:
+                if ext == ".svg":
+                    # SVG is text-based
+                    with open(path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    b64 = base64.b64encode(content.encode("utf-8")).decode()
+                    logo_src = f"data:image/svg+xml;base64,{b64}"
+                else:
+                    # Binary formats
+                    with open(path, "rb") as f:
+                        content = f.read()
+                    b64 = base64.b64encode(content).decode()
+                    mime = {
+                        ".png": "image/png",
+                        ".jpg": "image/jpeg",
+                        ".jpeg": "image/jpeg",
+                        ".webp": "image/webp",
+                    }.get(ext, "application/octet-stream")
+                    logo_src = f"data:{mime};base64,{b64}"
+            except Exception:
+                # If any error occurs reading/encoding, continue to next candidate
+                logo_src = None
+            finally:
+                if logo_src:
+                    break
+
+    if not logo_src:
         # Fallback: use a simple logo matching the main design if file not found
         fallback_svg = '''<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
             <rect width="200" height="60" fill="none"/>
@@ -214,9 +250,9 @@ def get_sidebar_logo_html():
                 THREAT INTELLIGENCE
             </text>
         </svg>'''
-        svg_b64 = base64.b64encode(fallback_svg.encode()).decode()
-        logo_src = f"data:image/svg+xml;base64,{svg_b64}"
-    
+        b64 = base64.b64encode(fallback_svg.encode("utf-8")).decode()
+        logo_src = f"data:image/svg+xml;base64,{b64}"
+
     return f"""
     <div class="sidebar-logo-container">
         <img src="{logo_src}" alt="The Operator Logo">
