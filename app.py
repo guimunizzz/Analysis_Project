@@ -7,22 +7,18 @@ from config.settings import load_config, save_config
 from services.virustotal import VirusTotalService
 from services.abuseipdb import AbuseIPDBService
 from utils.validators import validate_ip, validate_hash, validate_domain
+from styles.theme import get_common_styles, get_sidebar_logo_html
 
 # Configuração da página
 st.set_page_config(
-    page_title="Teste - Streamlit",
+    page_title="Sec Analysis - Streamlit",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS personalizado
-st.markdown("""
-    <style>
-    .main { padding: 2rem; }
-    .stMetric { background-color: #f0f2f6; border-radius: 8px; padding: 1rem; }
-    </style>
-""", unsafe_allow_html=True)
+# CSS personalizado - usando tema centralizado
+st.markdown(get_common_styles(), unsafe_allow_html=True)
 
 def initialize_session():
     """Inicializa variáveis de sessão"""
@@ -40,13 +36,16 @@ def main():
     initialize_session()
     
     # Header
-    st.title("🛡️ Nao sei o nome - Inteligência de Ameaças")
+    st.title("🛡️ Sec Analysis - Inteligência de Ameaças")
     st.markdown("Plataforma de análise de segurança com integração a múltiplas fontes")
     
     # Verificar se APIs estão configuradas
     config = st.session_state.config
     
     with st.sidebar:
+        # Add logo at the top of sidebar
+        st.markdown(get_sidebar_logo_html(), unsafe_allow_html=True)
+        
         st.header("Configuração")
         
         if not config.get('virustotal_api_key'):
@@ -69,27 +68,87 @@ def main():
     # Conteúdo principal
     st.markdown("---")
     
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("IPs Analisados", "0", delta="Esta sessão")
-    
-    with col2:
-        st.metric("Hashes Verificados", "0", delta="Esta sessão")
-    
-    with col3:
-        st.metric("Domínios Checados", "0", delta="Esta sessão")
+    # Cards de métricas com o novo estilo
+    st.markdown("""
+        <div class="card-row">
+            <div class="card">
+                <div class="card-label">IPs Analisados</div>
+                <div class="card-value">0</div>
+                <div class="card-sub">Esta sessão</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Hashes Verificados</div>
+                <div class="card-value">0</div>
+                <div class="card-sub">Esta sessão</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Domínios Checados</div>
+                <div class="card-value">0</div>
+                <div class="card-sub">Esta sessão</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("### 🚀 Bem-vindo ao nao sei o nome")
+    
+    # Seção de boas-vindas com cards
     st.markdown("""
-    Use as abas acima para:
-    - **Análise de IP**: Verificar reputação de endereços IP
-    - **Análise de Hash**: Validar hashes de arquivos (MD5, SHA1, SHA256)
-    - **Análise de Domínio**: Investigar domínios e URLs maliciosos
-    - **Listas de Bloqueio**: Gerenciar IPs, hashes e domínios bloqueados
-    - **Configurações**: Adicionar suas chaves de API
-    """)
+        <div class="page-shell">
+            <div class="page-shell-header">
+                <div>
+                    <div class="page-shell-title">
+                        🚀 Bem-vindo ao Sec Analysis
+                    </div>
+                    <div class="page-shell-subtitle">
+                        Plataforma integrada de inteligência de ameaças para análise de segurança
+                    </div>
+                </div>
+                <span class="page-shell-badge">THREAT INTELLIGENCE</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Cards de ferramentas disponíveis
+    st.markdown("### 🔧 Ferramentas Disponíveis")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+            <div class="card">
+                <div class="card-label">🔍 Análise de IP</div>
+                <div class="card-sub">Verificar reputação de endereços IP em múltiplas fontes</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+            <div class="card">
+                <div class="card-label">🔗 Análise de Hash</div>
+                <div class="card-sub">Validar hashes de arquivos (MD5, SHA1, SHA256)</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+            <div class="card">
+                <div class="card-label">🌐 Análise de Domínio</div>
+                <div class="card-sub">Investigar domínios e URLs maliciosos</div>
+            </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+            <div class="card">
+                <div class="card-label">📋 Listas de Bloqueio</div>
+                <div class="card-sub">Gerenciar IPs, hashes e domínios bloqueados</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+            <div class="card">
+                <div class="card-label">⚙️ Configurações</div>
+                <div class="card-sub">Adicionar suas chaves de API para integração</div>
+            </div>
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
