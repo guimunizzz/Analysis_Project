@@ -8,12 +8,10 @@ from services.shodan import ShodanService
 from services.greynoise import GreyNoiseService
 from services.ipqualityscore import IPQualityScoreService
 from utils.validators import validate_ip
-from utils.parsers import TextParser
-from utils.formatters import ResultFormatter
 import time
 
 # -------------------------------------------------------------------
-# CONFIG STREAMLIT + NOVO TEMA VISUAL
+# CONFIG STREAMLIT
 # -------------------------------------------------------------------
 st.set_page_config(
     page_title="Análise de IP",
@@ -21,39 +19,34 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS redesenhado – layout dark, cards limpos e foco em métricas
+# -------------------------------------------------------------------
+# CSS GLOBAL (mesmo padrão para todas as páginas)
+# -------------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* Background geral */
     .stApp {
-        background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
-        color: #e5e7eb;
+        background: radial-gradient(circle at top, #020617 0, #020617 55%);
+        color: #f9fafb;  /* texto principal branco */
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    /* Ajuste de padding da área principal */
     .main > div {
         padding-top: 1.5rem;
         padding-bottom: 2rem;
     }
 
-    /* Títulos */
-    h1, h2, h3, h4 {
-        color: #e5e7eb !important;
-    }
-
-    /* Container principal do IP */
-    .ip-shell {
-        background: rgba(15, 23, 42, 0.92);
-        border-radius: 20px;
-        border: 1px solid rgba(148, 163, 184, 0.25);
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.9);
-        padding: 1.5rem 1.5rem 1.8rem;
+    /* Shell principal de cada página */
+    .page-shell {
+        background: #020617;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.85);
+        padding: 1.6rem 1.4rem 1.9rem;
         margin-bottom: 1.5rem;
     }
 
-    .ip-shell-header {
+    .page-shell-header {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
@@ -62,195 +55,193 @@ st.markdown(
         margin-bottom: 1rem;
     }
 
-    .ip-shell-title {
+    .page-shell-title {
         font-size: 1.6rem;
         font-weight: 650;
         letter-spacing: -0.03em;
         display: flex;
         align-items: center;
         gap: 0.6rem;
+        color: #f9fafb;  /* título branco */
     }
 
-    .ip-shell-subtitle {
-        color: #9ca3af;
+    .page-shell-subtitle {
+        color: #e5e7eb;  /* subtítulo quase branco */
         font-size: 0.9rem;
     }
 
-    .ip-badge {
+    .page-shell-badge {
         font-size: 0.68rem;
         padding: 0.2rem 0.7rem;
         border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.5);
-        background: rgba(15, 23, 42, 0.86);
-        color: #9ca3af;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.96);
+        color: #e5e7eb;
         text-transform: uppercase;
         letter-spacing: 0.15em;
     }
 
-    /* Campo de IP */
-    .ip-input-label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: #9ca3af;
-        margin-bottom: 0.25rem;
-    }
-
-    .ip-helper {
-        font-size: 0.78rem;
-        color: #6b7280;
-        margin-top: 0.25rem;
-    }
-
-    /* Containers de cards */
+    /* Cards genéricos */
     .card-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 0.85rem;
         margin-top: 1.1rem;
     }
 
-    .card-metric {
-        background: radial-gradient(circle at top left, rgba(59,130,246,0.22), rgba(15,23,42,1));
-        border-radius: 16px;
-        border: 1px solid rgba(37, 99, 235, 0.35);
+    .card {
+        background: #020617;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
         padding: 0.9rem 1rem;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.85);
     }
 
-    .card-metric-label {
-        font-size: 0.75rem;
+    .card-muted {
+        background: #020617;
+        border-radius: 14px;
+        border: 1px dashed rgba(148, 163, 184, 0.45);
+        box-shadow: none;
+        padding: 0.9rem 1rem;
+    }
+
+    .card-label {
+        font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.16em;
-        color: #9ca3af;
-        margin-bottom: 0.35rem;
+        color: #cbd5f5;  /* label clara */
+        margin-bottom: 0.3rem;
     }
 
-    .card-metric-value {
-        font-size: 1.4rem;
+    .card-value {
+        font-size: 1.35rem;
         font-weight: 650;
-        letter-spacing: 0.02em;
+        color: #ffffff;  /* valor branco */
     }
+
+    .card-sub {
+        font-size: 0.8rem;
+        color: #e5e7eb;  /* subtítulo claro */
+        margin-top: 0.25rem;
+    }
+
+    /* Status e badges */
+    .status-ok   { color: #22c55e; }
+    .status-warn { color: #facc15; }
+    .status-bad  { color: #fca5a5; }
 
     .badge-soft {
-        font-size: 0.7rem;
-        padding: 0.15rem 0.5rem;
+        font-size: 0.72rem;
+        padding: 0.15rem 0.6rem;
         border-radius: 999px;
-        background: rgba(15,23,42,0.9);
-        border: 1px solid rgba(148,163,184,0.4);
-        color: #9ca3af;
+        background: rgba(15,23,42,0.96);
+        border: 1px solid rgba(148,163,184,0.5);
+        color: #e5e7eb;
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
         margin-top: 0.35rem;
     }
 
-    .status-ok   { color: #22c55e; }
-    .status-warn { color: #facc15; }
-    .status-bad  { color: #ef4444; }
+    /* Input IP */
+    .ip-input-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #cbd5f5;
+        margin-bottom: 0.25rem;
+    }
 
-    /* Bloco de alertas integrados */
+    .ip-helper {
+        font-size: 0.78rem;
+        color: #9ca3af;
+        margin-top: 0.25rem;
+    }
+
+    /* Alertas detectados – maiores, com texto branco */
     .alert-section {
-        background: rgba(24, 24, 27, 0.98);
+        background: #111827;
         border-radius: 16px;
         border: 1px solid rgba(248, 250, 252, 0.08);
-        padding: 0.95rem 1rem;
+        padding: 1.15rem 1.15rem;
         margin-top: 1.25rem;
     }
 
     .alert-title {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 600;
-        color: #f97316;
+        color: #fdba74;
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        margin-bottom: 0.55rem;
+        margin-bottom: 0.7rem;
     }
 
     .alert-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem;
+        gap: 0.55rem;
     }
 
     .pill-alert {
-        font-size: 0.75rem;
+        font-size: 0.86rem;              /* maior */
         border-radius: 999px;
-        padding: 0.25rem 0.7rem;
+        padding: 0.45rem 1rem;           /* mais alto e mais largo */
         display: inline-flex;
         align-items: center;
-        gap: 0.3rem;
-        border: 1px solid rgba(148, 163, 184, 0.45);
-        background: rgba(15, 23, 42, 0.92);
-        color: #e5e7eb;
+        gap: 0.45rem;
+        border: 1px solid rgba(148, 163, 184, 0.55);
+        background: #1d2a3f;
+        color: #ffffff;                  /* texto branco */
+        font-weight: 500;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.75);
     }
 
-    .pill-vpn     { border-color: rgba(59,130,246,0.6);   color:#bfdbfe; }
-    .pill-proxy   { border-color: rgba(14,165,233,0.6);   color:#e0f2fe; }
-    .pill-tor     { border-color: rgba(124,58,237,0.7);   color:#e9d5ff; }
-    .pill-bot     { border-color: rgba(244,114,182,0.7);  color:#fce7f3; }
-    .pill-abuse   { border-color: rgba(239,68,68,0.7);    color:#fee2e2; }
-
-    /* Seção VirusTotal em destaque */
-    .virustotal-section {
-        margin-top: 1.4rem;
-        background: linear-gradient(135deg, rgba(30,64,175,0.35), rgba(15,23,42,0.98));
-        border-radius: 18px;
-        border: 1px solid rgba(37,99,235,0.5);
-        padding: 1rem 1.1rem 1.1rem;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+    .pill-vpn {
+        border-color: rgba(59,130,246,0.9);
+        background: linear-gradient(135deg, #2563eb, #1e293b);
+        color: #ffffff;
     }
 
-    .virustotal-title {
-        font-size: 0.9rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #dbeafe;
-        margin-bottom: 0.7rem;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
+    .pill-proxy {
+        border-color: rgba(14,165,233,0.9);
+        background: linear-gradient(135deg, #0284c7, #1e293b);
+        color: #ffffff;
     }
 
-    .metric-highlight {
-        background: rgba(15,23,42,0.95);
-        border-radius: 0.9rem;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        padding: 0.65rem 0.75rem;
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.85);
+    .pill-tor {
+        border-color: rgba(124,58,237,0.9);
+        background: linear-gradient(135deg, #7c3aed, #1e293b);
+        color: #ffffff;
     }
 
-    .metric-value-highlight {
-        font-size: 1.35rem;
-        font-weight: 650;
-        margin-bottom: 0.05rem;
+    .pill-bot {
+        border-color: rgba(244,114,182,0.9);
+        background: linear-gradient(135deg, #db2777, #1e293b);
+        color: #ffffff;
     }
 
-    .metric-label-highlight {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: #9ca3af;
+    .pill-abuse {
+        border-color: rgba(239,68,68,0.95);
+        background: linear-gradient(135deg, #ef4444, #1e293b);
+        color: #ffffff;
     }
 
-    /* Tabs de detalhes */
     .block-section-title {
-        margin-top: 1.4rem;
+        margin-top: 1.3rem;
         font-size: 1rem;
         font-weight: 600;
+        color: #f9fafb;
     }
 
-    /* Historico de IPs */
+    /* Histórico simples */
     .history-badge {
         font-size: 0.8rem;
         border-radius: 999px;
         padding: 0.25rem 0.7rem;
         border: 1px solid rgba(148,163,184,0.4);
-        background: rgba(15,23,42,0.9);
-        color: #9ca3af;
+        background: #020617;
+        color: #e5e7eb;
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
@@ -258,12 +249,12 @@ st.markdown(
         margin-bottom: 0.25rem;
     }
 
-    /* Botão limpar análises – melhor destaque */
+    /* Botões secundários (limpar, etc.) */
     .stButton>button[kind="secondary"] {
         border-radius: 999px !important;
         background: transparent !important;
         border: 1px solid rgba(148,163,184,0.5) !important;
-        color: #9ca3af !important;
+        color: #e5e7eb !important;
         font-size: 0.85rem !important;
     }
     </style>
@@ -288,21 +279,21 @@ greynoise_service = GreyNoiseService(config["greynoise_api_key"]) if config.get(
 ipqualityscore_service = IPQualityScoreService(config["ipqualityscore_api_key"]) if config.get("ipqualityscore_api_key") else None
 
 # -------------------------------------------------------------------
-# HEADER DA PÁGINA
+# HEADER / SHELL DA PÁGINA
 # -------------------------------------------------------------------
 st.markdown(
     """
-    <div class="ip-shell">
-      <div class="ip-shell-header">
+    <div class="page-shell">
+      <div class="page-shell-header">
         <div>
-          <div class="ip-shell-title">
+          <div class="page-shell-title">
             🔍 Análise de IP
-            <span class="ip-badge">Threat Intelligence • Multi‑Fonte</span>
           </div>
-          <div class="ip-shell-subtitle">
-            Consulte reputação, localização, exposição e sinais de abuso de endereços IP em múltiplas fontes.
+          <div class="page-shell-subtitle">
+            Verifique reputação, localização, exposição e sinais de abuso de endereços IP em múltiplas fontes.
           </div>
         </div>
+        <span class="page-shell-badge">Threat Intelligence • IP</span>
       </div>
     """,
     unsafe_allow_html=True,
@@ -326,11 +317,11 @@ with col_input:
     )
 
 with col_button:
-    st.write("")  # espaço
+    st.write("")
     st.write("")
     analyze_single = st.button("🔍 Analisar IP", key="analyze_single_btn", use_container_width=True)
 
-st.markdown("</div>", unsafe_allow_html=True)  # fecha .ip-shell
+st.markdown("</div>", unsafe_allow_html=True)  # fecha .page-shell
 
 # -------------------------------------------------------------------
 # SESSION STATE
@@ -365,11 +356,9 @@ if analyze_single and ip_input.strip():
             st.session_state.analyzed_ips[ip_value] = combined_result
 
 # -------------------------------------------------------------------
-# FUNÇÃO DE RENDERIZAÇÃO – NOVO DESIGN
+# FUNÇÃO DE RENDERIZAÇÃO
 # -------------------------------------------------------------------
 def render_ip_result(ip_value, ip_data):
-    """Renderiza um resultado de análise de IP com layout redesenhado."""
-
     vt_result = ip_data.get("vt", {})
     abuseipdb_result = ip_data.get("abuseipdb", {})
     ipinfo_result = ip_data.get("ipinfo", {})
@@ -377,25 +366,26 @@ def render_ip_result(ip_value, ip_data):
     greynoise_result = ip_data.get("greynoise", {})
     ipqualityscore_result = ip_data.get("ipqualityscore", {})
 
-    # Cálculo de métricas integradas básicas
     is_vpn = ipqualityscore_result.get("vpn", False)
     is_proxy = ipqualityscore_result.get("proxy", False)
     is_tor = ipqualityscore_result.get("tor", False)
     is_bot = ipqualityscore_result.get("bot_status", False)
     fraud_score = ipqualityscore_result.get("fraud_score", 0)
-    reputation = vt_result.get("reputation", 0)
-    abuse_score = abuseipdb_result.get("abuseConfidenceScore", 0)
-    recent_abuse = abuseipdb_result.get("totalReports", 0) > 0
 
-    # Score geral simplificado
-    # você pode ajustar a fórmula conforme sua lógica
+    # AbuseIPDB pode usar chaves diferentes conforme sua implementação;
+    # se na sua resposta a chave for 'abuse_confidence_score', ajuste aqui.
+    abuse_score = abuseipdb_result.get("abuse_confidence_score", 0)
+    recent_abuse = bool(abuseipdb_result.get("total_reports", 0))
+
+    reputation = vt_result.get("reputation", 0)
+
+    # Risk score integrado simples
     risk_score = max(
         fraud_score,
-        abuse_score if isinstance(abuse_score, int) else 0,
+        abuse_score if isinstance(abuse_score, (int, float)) else 0,
         100 if is_tor or is_bot else 0,
     )
 
-    # Texto e cor de status
     if risk_score >= 80:
         status_text = "Alto Risco"
         status_class = "status-bad"
@@ -406,28 +396,18 @@ def render_ip_result(ip_value, ip_data):
         status_text = "Baixo Risco"
         status_class = "status-ok"
 
-    # ---------------------------------------------------------------
-    # CABEÇALHO DO RESULTADO
-    # ---------------------------------------------------------------
     st.markdown(f"### 📌 Resultado para **`{ip_value}`**")
 
-    # Linha de cards principais
-    st.markdown(
-        """
-        <div class="card-row">
-        """,
-        unsafe_allow_html=True,
-    )
-
+    # CARDS PRINCIPAIS
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown(
             f"""
-            <div class="card-metric">
-                <div class="card-metric-label">Score Integrado</div>
-                <div class="card-metric-value {status_class}">{risk_score}</div>
-                <div class="badge-soft"><span class="{status_class}">●</span>{status_text}</div>
+            <div class="card">
+                <div class="card-label">Score Integrado</div>
+                <div class="card-value {status_class}">{risk_score}</div>
+                <div class="card-sub">{status_text}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -436,23 +416,23 @@ def render_ip_result(ip_value, ip_data):
     with col2:
         st.markdown(
             f"""
-            <div class="card-metric">
-                <div class="card-metric-label">Reputação (VirusTotal)</div>
-                <div class="card-metric-value">{reputation}</div>
-                <div class="badge-soft">Fonte: VirusTotal</div>
+            <div class="card">
+                <div class="card-label">Reputação (VirusTotal)</div>
+                <div class="card-value">{reputation}</div>
+                <div class="card-sub">Indicador bruto de reputação</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
     with col3:
-        abuse_val = abuse_score if isinstance(abuse_score, int) else 0
+        abuse_val = abuse_score if isinstance(abuse_score, (int, float)) else 0
         st.markdown(
             f"""
-            <div class="card-metric">
-                <div class="card-metric-label">Abuso (AbuseIPDB)</div>
-                <div class="card-metric-value">{abuse_val}</div>
-                <div class="badge-soft">Confidence Score</div>
+            <div class="card">
+                <div class="card-label">Abuso (AbuseIPDB)</div>
+                <div class="card-value">{abuse_val}</div>
+                <div class="card-sub">Abuse Confidence Score</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -465,20 +445,16 @@ def render_ip_result(ip_value, ip_data):
         city = ipqualityscore_result.get("city", ipinfo_result.get("city", "N/A"))
         st.markdown(
             f"""
-            <div class="card-metric">
-                <div class="card-metric-label">Localização</div>
-                <div class="card-metric-value">{country}</div>
-                <div class="badge-soft">Cidade: {city}</div>
+            <div class="card card-muted">
+                <div class="card-label">Localização</div>
+                <div class="card-value">{country}</div>
+                <div class="card-sub">Cidade: {city}</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---------------------------------------------------------------
     # ALERTAS INTEGRADOS
-    # ---------------------------------------------------------------
     alerts = []
     if is_vpn:
         alerts.append(("vpn", "VPN Detectada"))
@@ -487,7 +463,7 @@ def render_ip_result(ip_value, ip_data):
     if is_tor:
         alerts.append(("tor", "Tráfego Tor Detectado"))
     if is_bot:
-        alerts.append(("bot", "Possível Bot/SCRIPT Automático"))
+        alerts.append(("bot", "Possível Bot/Script"))
     if ipqualityscore_result.get("high_risk_attacks"):
         alerts.append(("abuse", "Ataques de Alto Risco Detectados"))
     if recent_abuse:
@@ -519,74 +495,17 @@ def render_ip_result(ip_value, ip_data):
 
         st.markdown("</div></div>", unsafe_allow_html=True)
 
-    # ---------------------------------------------------------------
-    # VIRUSTOTAL EM DESTAQUE
-    # ---------------------------------------------------------------
-    st.markdown(
-        """
-        <div class="virustotal-section">
-            <div class="virustotal-title">🛡️ VirusTotal — Análise de Detecção</div>
-        """,
-        unsafe_allow_html=True,
-    )
+    # VIRUSTOTAL – RESUMO
+    st.markdown("#### 🛡️ VirusTotal — Estatísticas de Detecção")
+    stats = vt_result.get("last_analysis_stats", {})
+    col_v1, col_v2, col_v3, col_v4 = st.columns(4)
+    col_v1.metric("Malicious", stats.get("malicious", 0))
+    col_v2.metric("Suspicious", stats.get("suspicious", 0))
+    col_v3.metric("Undetected", stats.get("undetected", 0))
+    col_v4.metric("Harmless", stats.get("harmless", 0))
 
-    vt_col1, vt_col2, vt_col3, vt_col4 = st.columns(4)
-
-    with vt_col1:
-        malicious = vt_result.get("last_analysis_stats", {}).get("malicious", 0)
-        st.markdown(
-            f"""
-            <div class="metric-highlight">
-                <div class="metric-value-highlight status-bad">{malicious}</div>
-                <div class="metric-label-highlight">Malicioso</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with vt_col2:
-        suspicious = vt_result.get("last_analysis_stats", {}).get("suspicious", 0)
-        st.markdown(
-            f"""
-            <div class="metric-highlight">
-                <div class="metric-value-highlight status-warn">{suspicious}</div>
-                <div class="metric-label-highlight">Suspeito</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with vt_col3:
-        undetected = vt_result.get("last_analysis_stats", {}).get("undetected", 0)
-        st.markdown(
-            f"""
-            <div class="metric-highlight">
-                <div class="metric-value-highlight">{undetected}</div>
-                <div class="metric-label-highlight">Undetected</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with vt_col4:
-        harmless = vt_result.get("last_analysis_stats", {}).get("harmless", 0)
-        st.markdown(
-            f"""
-            <div class="metric-highlight">
-                <div class="metric-value-highlight status-ok">{harmless}</div>
-                <div class="metric-label-highlight">Harmless</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---------------------------------------------------------------
     # DETALHES ORGANIZADOS EM ABAS
-    # ---------------------------------------------------------------
     st.markdown("### 📋 Informações detalhadas")
-
     tab1, tab2, tab3 = st.tabs(["🌍 Localização", "🔗 Conexão / Infra", "🔒 Segurança & Abuso"])
 
     with tab1:
@@ -619,11 +538,9 @@ def render_ip_result(ip_value, ip_data):
             st.metric("Tipo de Conexão", ipqualityscore_result.get("connection_type", "N/A"))
             st.metric("ASN", ipqualityscore_result.get("asn", "N/A"))
 
-        # se quiser, você pode adicionar detalhes de Shodan/GreyNoise aqui
         if shodan_result:
             st.markdown("---")
-            st.markdown("#### Shodan — Portas e Serviços")
-            # Exemplo simples; adapte ao formato real do retorno
+            st.markdown("#### Shodan — Visão Geral")
             st.json(shodan_result)
 
     with tab3:
@@ -643,7 +560,7 @@ def render_ip_result(ip_value, ip_data):
             )
 
         st.markdown("---")
-        st.markdown("##### Detalhes Brutos (AbuseIPDB / IPQualityScore)")
+        st.markdown("##### Dados Brutos (AbuseIPDB / IPQualityScore)")
         st.json(
             {
                 "abuseipdb": abuseipdb_result,
@@ -660,7 +577,6 @@ if st.session_state.analyzed_ips:
 
     ip_list = list(st.session_state.analyzed_ips.keys())
 
-    # Histórico rápido de IPs analisados
     st.markdown("#### Histórico desta sessão")
     hist_html = "".join(
         f'<span class="history-badge">● {ip}</span>' for ip in ip_list
