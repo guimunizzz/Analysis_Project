@@ -3,6 +3,9 @@ Centralized theme and styles for The Operator application.
 This module contains all CSS styles used across the application for consistency.
 """
 
+import base64
+from pathlib import Path
+
 def get_common_styles():
     """
     Returns the common CSS styles used across all pages.
@@ -183,9 +186,6 @@ def get_sidebar_logo_html():
     Returns the HTML for the sidebar logo.
     This should be added at the top of the sidebar in all pages.
     """
-    import base64
-    from pathlib import Path
-    
     # Try to load the logo
     logo_path = Path(__file__).parent.parent / "assets" / "logo.svg"
     
@@ -196,15 +196,24 @@ def get_sidebar_logo_html():
             svg_b64 = base64.b64encode(svg_content.encode()).decode()
             logo_src = f"data:image/svg+xml;base64,{svg_b64}"
     else:
-        # Fallback: use a simple text-based logo if file not found
-        fallback_svg = '''
-        <svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
-            <text x="10" y="35" font-family="system-ui, sans-serif" 
-                  font-size="20" font-weight="700" fill="#3b82f6">
+        # Fallback: use a simple logo matching the main design if file not found
+        fallback_svg = '''<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="60" fill="none"/>
+            <g id="shield">
+                <path d="M 30 10 L 40 10 L 45 15 L 45 35 C 45 42 40 47 35 50 C 30 47 25 42 25 35 L 25 15 Z" 
+                      fill="#3b82f6" stroke="#1e40af" stroke-width="1.5"/>
+                <path d="M 30 18 L 35 24 L 42 16" 
+                      stroke="#ffffff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <text x="55" y="28" font-family="system-ui, -apple-system, sans-serif" 
+                  font-size="18" font-weight="700" fill="#f9fafb">
                 The Operator
             </text>
-        </svg>
-        '''
+            <text x="55" y="44" font-family="system-ui, -apple-system, sans-serif" 
+                  font-size="10" font-weight="400" fill="#94a3b8" letter-spacing="1">
+                THREAT INTELLIGENCE
+            </text>
+        </svg>'''
         svg_b64 = base64.b64encode(fallback_svg.encode()).decode()
         logo_src = f"data:image/svg+xml;base64,{svg_b64}"
     
