@@ -1,16 +1,20 @@
 import streamlit as st
 import pandas as pd
-from config. settings import load_config
+from config.settings import load_config
 from services.virustotal import VirusTotalService
 from utils.validators import validate_hash
 from utils.parsers import TextParser
 from utils.formatters import ResultFormatter
+from styles.theme import get_common_styles, get_sidebar_logo_html
 import time
 from datetime import datetime
 
 st.set_page_config(page_title="Análise de Hash", page_icon="🔗", layout="wide")
 
-# CSS customizado para visual mais parecido com VirusTotal
+# Apply common styles from theme
+st.markdown(get_common_styles(), unsafe_allow_html=True)
+
+# Additional styles specific to Hash Analysis page
 st.markdown("""
     <style>
     .hash-result-container {
@@ -136,34 +140,52 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🔗 Análise de Hash")
-st.markdown("Verifique a reputação de hashes de arquivo (MD5, SHA1, SHA256) com detalhes de vendors e threat labels")
+# Add sidebar logo
+with st.sidebar:
+    st.markdown(get_sidebar_logo_html(), unsafe_allow_html=True)
+
+# Page header with consistent design
+st.markdown("""
+    <div class="page-shell">
+      <div class="page-shell-header">
+        <div>
+          <div class="page-shell-title">
+            🔗 Análise de Hash
+          </div>
+          <div class="page-shell-subtitle">
+            Verifique a reputação de hashes de arquivo (MD5, SHA1, SHA256) com detalhes de vendors e threat labels
+          </div>
+        </div>
+        <span class="page-shell-badge">Threat Intelligence • Hash</span>
+      </div>
+    </div>
+""", unsafe_allow_html=True)
 
 config = load_config()
 
-if not config. get('virustotal_api_key'):
+if not config.get('virustotal_api_key'):
     st.error("❌ VirusTotal API não configurada. Acesse Configurações.")
     st.stop()
 
 vt_service = VirusTotalService(config['virustotal_api_key'])
 
 # Inicializar session state
-if 'analyzed_hashes' not in st. session_state:
-    st. session_state.analyzed_hashes = {}
+if 'analyzed_hashes' not in st.session_state:
+    st.session_state.analyzed_hashes = {}
 
 # ============================================
 # SEÇÃO DE ENTRADA
 # ============================================
-st.markdown("## 📝 Inserir Hash para Análise")
-
 col1, col2 = st.columns([4, 1])
 
 with col1:
+    st.markdown('<div class="ip-input-label">Hash para Análise</div>', unsafe_allow_html=True)
     hash_input = st.text_input(
-        "Cole o hash aqui (MD5, SHA1 ou SHA256):",
-        placeholder="d41d8cd98f00b204e9800998ecf8427e ou da39a3ee5e6b4b0d3255bfef95601890afd80709",
+        label="",
+        placeholder="Ex.: d41d8cd98f00b204e9800998ecf8427e (MD5, SHA1 ou SHA256)",
         key="hash_input_main"
     )
+    st.markdown('<div class="ip-helper">Cole um hash de arquivo para análise detalhada. Resultados completos de VirusTotal serão exibidos abaixo.</div>', unsafe_allow_html=True)
 
 with col2:
     st.write("")
@@ -171,14 +193,14 @@ with col2:
     analyze_single = st.button("🔍 Analisar", key="analyze_single_btn", use_container_width=True)
 
 # Analisar um único hash
-if analyze_single and hash_input. strip():
-    hash_value = hash_input.strip(). lower()
+if analyze_single and hash_input.strip():
+    hash_value = hash_input.strip().lower()
     
     # Validar formato
     is_valid, hash_type = validate_hash(hash_value)
     
     if not is_valid:
-        st. error("❌ Formato de hash inválido!   Use MD5 (32), SHA1 (40) ou SHA256 (64) caracteres hexadecimais.")
+        st.error("❌ Formato de hash inválido! Use MD5 (32), SHA1 (40) ou SHA256 (64) caracteres hexadecimais.")
     else:
         # Analisar
         with st.spinner(f"🔄 Analisando {hash_type} hash..."):
@@ -192,7 +214,7 @@ if analyze_single and hash_input. strip():
 # SEÇÃO DE UPLOAD EM LOTE
 # ============================================
 st.markdown("---")
-st.markdown("## 📤 Análise em Lote")
+st.markdown("### 📤 Análise em Lote")
 
 with st.expander("📦 Carregar múltiplos hashes de arquivo"):
     uploaded_file = st.file_uploader("Selecione um arquivo txt ou csv:", type=['txt', 'csv'])
@@ -202,7 +224,7 @@ with st.expander("📦 Carregar múltiplos hashes de arquivo"):
         hashes = TextParser.parse_hashes(content)
         
         if hashes:
-            st. success(f"✅ {len(hashes)} hash(es) válido(s) encontrado(s).   Iniciando análise...")
+            st.success(f"✅ {len(hashes)} hash(es) válido(s) encontrado(s). Iniciando análise...")
             
             progress_bar = st.progress(0)
             status_placeholder = st.empty()
@@ -398,7 +420,7 @@ def render_hash_result(hash_value, hash_data):
         # HASHES ALTERNATIVOS
         st.markdown("### 🔗 Hashes Alternativos do Arquivo")
         
-        hash_col1, hash_col2, hash_col3 = st. columns(3)
+        hash_col1, hash_col2, hash_col3 = st.columns(3)
         
         with hash_col1:
             md5 = result.get('md5', 'N/A')
@@ -425,7 +447,7 @@ def render_hash_result(hash_value, hash_data):
 # SEÇÃO DE RESULTADOS
 # ============================================
 if st.session_state.analyzed_hashes:
-    st. markdown("---")
+    st.markdown("---")
     st.markdown("## 📊 Resultados da Análise")
     
     # Abas para cada hash

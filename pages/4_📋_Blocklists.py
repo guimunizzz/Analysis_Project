@@ -4,10 +4,35 @@ import json
 from pathlib import Path
 from datetime import datetime
 import logging
+from styles.theme import get_common_styles, get_sidebar_logo_html
 
 st.set_page_config(page_title="Listas de Bloqueio", page_icon="📋", layout="wide")
 
+# Apply common styles from theme
+st.markdown(get_common_styles(), unsafe_allow_html=True)
+
+# Add sidebar logo
+with st.sidebar:
+    st.markdown(get_sidebar_logo_html(), unsafe_allow_html=True)
+
 logger = logging.getLogger(__name__)
+
+# Page header with consistent design
+st.markdown("""
+    <div class="page-shell">
+      <div class="page-shell-header">
+        <div>
+          <div class="page-shell-title">
+            📋 Listas de Bloqueio
+          </div>
+          <div class="page-shell-subtitle">
+            Gerencie seus IPs, hashes e domínios bloqueados de forma centralizada
+          </div>
+        </div>
+        <span class="page-shell-badge">Security Management • Blocklist</span>
+      </div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Configuração de arquivos
 BLOCKLIST_FILE = Path("data/blocklists. json")
@@ -92,8 +117,9 @@ def export_blocklist(blocklist_type: str, format: str = 'txt'):
     
     return ""
 
-st.title("📋 Listas de Bloqueio")
-st.markdown("Gerencie seus IPs, hashes e domínios bloqueados")
+# Configuração de arquivos
+BLOCKLIST_FILE = Path("data/blocklists.json")
+BLOCKLIST_FILE.parent.mkdir(exist_ok=True)
 
 # Abas principais
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
