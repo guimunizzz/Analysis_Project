@@ -10,7 +10,7 @@ from utils.validators import validate_ip, validate_hash, validate_domain
 
 # Configuração da página
 st.set_page_config(
-    page_title="The Operator - Streamlit",
+    page_title="Teste - Streamlit",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -40,7 +40,7 @@ def main():
     initialize_session()
     
     # Header
-    st.title("🛡️ The Operator - Inteligência de Ameaças")
+    st.title("🛡️ Nao sei o nome - Inteligência de Ameaças")
     st.markdown("Plataforma de análise de segurança com integração a múltiplas fontes")
     
     # Verificar se APIs estão configuradas
@@ -81,7 +81,7 @@ def main():
         st.metric("Domínios Checados", "0", delta="Esta sessão")
     
     st.markdown("---")
-    st.markdown("### 🚀 Bem-vindo ao The Operator")
+    st.markdown("### 🚀 Bem-vindo ao nao sei o nome")
     st.markdown("""
     Use as abas acima para:
     - **Análise de IP**: Verificar reputação de endereços IP
