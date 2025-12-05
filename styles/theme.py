@@ -196,14 +196,20 @@ def get_sidebar_logo_html():
             svg_b64 = base64.b64encode(svg_content.encode()).decode()
             logo_src = f"data:image/svg+xml;base64,{svg_b64}"
     else:
-        # Fallback: use a placeholder if logo not found
-        logo_src = ""
+        # Fallback: use a simple text-based logo if file not found
+        fallback_svg = '''
+        <svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+            <text x="10" y="35" font-family="system-ui, sans-serif" 
+                  font-size="20" font-weight="700" fill="#3b82f6">
+                The Operator
+            </text>
+        </svg>
+        '''
+        svg_b64 = base64.b64encode(fallback_svg.encode()).decode()
+        logo_src = f"data:image/svg+xml;base64,{svg_b64}"
     
-    if logo_src:
-        return f"""
-        <div class="sidebar-logo-container">
-            <img src="{logo_src}" alt="The Operator Logo">
-        </div>
-        """
-    else:
-        return ""
+    return f"""
+    <div class="sidebar-logo-container">
+        <img src="{logo_src}" alt="The Operator Logo">
+    </div>
+    """
