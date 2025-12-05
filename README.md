@@ -1,152 +1,94 @@
-# The Operator - Plataforma de Inteligência de Ameaças
+# Sec Analysis 
 
-Plataforma integrada de análise de segurança com integração a múltiplas fontes de inteligência de ameaças.
+Plataforma de inteligência de ameaças construída com Streamlit, oferecendo análise de IPs, hashes e domínios com integração a diversas fontes (VirusTotal, AbuseIPDB, Shodan, IPinfo, GreyNoise, IPQualityScore).
 
-## 🎨 Personalização do Logo
+## � Principais recursos
 
-### Substituindo o Logo
+- Análise de reputação de IP em múltiplas APIs
+- Verificação de hashes (MD5, SHA1, SHA256)
+- Investigação de domínios/URLs
+- Gerenciamento de listas de bloqueio (IPs, hashes, domínios)
+- Tema escuro moderno com UI consistente
+- Configuração centralizada de chaves de API
 
-O logo da aplicação está localizado em `assets/logo.svg`. Para personalizar com sua própria marca:
+## 🏗️ Arquitetura
 
-1. **Formato recomendado**: SVG (Scalable Vector Graphics)
-   - Alternativamente, você pode usar PNG ou JPEG
+- `app.py`: Página inicial com UI e métricas
+- `pages/`: Páginas modulares da aplicação (IP, Hash, Domínio, Blocklists, Configurações)
+- `services/`: Integrações com provedores (VirusTotal, AbuseIPDB, Shodan, etc.)
+- `styles/theme.py`: Tema central e CSS comum (inclui logo na sidebar)
+- `config/settings.py`: Carregamento e persistência de configuração (.env e JSON)
+- `utils/`: Validadores, formatadores e parsers
 
-2. **Dimensões recomendadas**:
-   - Largura máxima: 200px
-   - Altura máxima: 60px
-   - O logo será redimensionado automaticamente para caber na sidebar
+## � Instalação e execução
 
-3. **Como substituir**:
-   ```bash
-   # Substitua o arquivo existente
-   cp seu-logo.svg assets/logo.svg
-   
-   # Ou se estiver usando PNG
-   cp seu-logo.png assets/logo.png
-   # E atualize o arquivo styles/theme.py para apontar para .png
-   ```
+1) Clone e entre no projeto
 
-4. **Modificar o código** (se mudar o formato):
-   - Edite `styles/theme.py`
-   - Na função `get_sidebar_logo_html()`, altere a linha:
-     ```python
-     logo_path = Path(__file__).parent.parent / "assets" / "logo.svg"
-     ```
-     Para:
-     ```python
-     logo_path = Path(__file__).parent.parent / "assets" / "logo.png"
-     ```
-
-### Ajustando o Tamanho do Logo
-
-Se precisar ajustar o tamanho do logo no sidebar, edite o arquivo `styles/theme.py`:
-
-```python
-# Localize a seção:
-.sidebar-logo-container img {
-    max-width: 100%;
-    height: auto;
-    max-height: 60px;  # Altere este valor
-}
+```powershell
+git clone https://github.com/guimunizzz/Analysis_Project.git
+cd Analysis_Project
 ```
 
-### Removendo o Logo
+2) Crie o ambiente e instale dependências
 
-Para remover o logo completamente:
-
-1. Edite `app.py` e remova a linha:
-   ```python
-   st.markdown(get_sidebar_logo_html(), unsafe_allow_html=True)
-   ```
-
-## 🎨 Personalização de Temas
-
-### Cores e Estilos
-
-Os estilos da aplicação estão centralizados em `styles/theme.py`. Para personalizar:
-
-1. **Cores principais**:
-   ```css
-   background: #020617          /* Fundo escuro */
-   color: #f9fafb              /* Texto principal */
-   border: rgba(148, 163, 184, 0.35)  /* Bordas dos cards */
-   ```
-
-2. **Cards**:
-   - Edite a classe `.card` em `get_common_styles()`
-   - Modifique bordas, sombras, padding conforme necessário
-
-3. **Status colors**:
-   ```css
-   .status-ok   { color: #22c55e; }  /* Verde */
-   .status-warn { color: #facc15; }  /* Amarelo */
-   .status-bad  { color: #fca5a5; }  /* Vermelho */
-   ```
-
-## 📦 Instalação
-
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/guimunizzz/Analysis_Project.git
-   cd Analysis_Project
-   ```
-
-2. Instale as dependências:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Configure suas chaves de API:
-   - Acesse a página "Configurações" na aplicação
-   - Ou crie um arquivo `.env` com suas chaves:
-     ```
-     VIRUSTOTAL_API_KEY=sua_chave_aqui
-     ABUSEIPDB_API_KEY=sua_chave_aqui
-     SHODAN_API_KEY=sua_chave_aqui
-     IPINFO_TOKEN=sua_chave_aqui
-     GREYNOISE_API_KEY=sua_chave_aqui
-     IPQUALITYSCORE_API_KEY=sua_chave_aqui
-     ```
-
-4. Execute a aplicação:
-   ```bash
-   streamlit run app.py
-   ```
-
-## 🔧 Ferramentas Disponíveis
-
-- **🔍 Análise de IP**: Verificar reputação de endereços IP em múltiplas fontes
-- **🔗 Análise de Hash**: Validar hashes de arquivos (MD5, SHA1, SHA256)
-- **🌐 Análise de Domínio**: Investigar domínios e URLs maliciosos
-- **📋 Listas de Bloqueio**: Gerenciar IPs, hashes e domínios bloqueados
-- **⚙️ Configurações**: Adicionar suas chaves de API para integração
-
-## 🏗️ Estrutura do Projeto
-
-```
-Analysis_Project/
-├── app.py                 # Página principal (Home)
-├── pages/                 # Páginas da aplicação
-│   ├── 1_🔍_IP_Analysis.py
-│   ├── 2_🔗_Hash_Analysis.py
-│   ├── 3_🌐_Domain_Analysis.py
-│   ├── 4_📋_Blocklists.py
-│   └── 5_⚙️_Settings.py
-├── styles/                # Estilos centralizados
-│   └── theme.py          # Tema e CSS comum
-├── assets/                # Recursos visuais
-│   └── logo.svg          # Logo da aplicação
-├── config/                # Configurações
-│   └── settings.py
-├── services/              # Integrações com APIs
-├── utils/                 # Utilitários
-└── requirements.txt       # Dependências
+```powershell
+pip install -r requirements.txt
 ```
 
-## 📝 Licença
+3) Configure suas chaves de API (opções)
 
-[Incluir informações de licença aqui]
+- Pela interface: abra a página "⚙️ Configurações" e preencha as chaves
+- Ou via `.env` na raiz do projeto:
 
-## 🤝 Contribuindo
+```text
+VIRUSTOTAL_API_KEY=...
+ABUSEIPDB_API_KEY=...
+SHODAN_API_KEY=...
+IPINFO_TOKEN=...
+GREYNOISE_API_KEY=...
+IPQUALITYSCORE_API_KEY=...
+```
 
-Contribuições são bem-vindas! Por favor, abra uma issue ou pull request.
+4) Execute a aplicação
+
+```powershell
+streamlit run app.py
+```
+
+## 🧩 Páginas
+
+- `1_🔍_IP_Analysis.py`: Consulta reputação e detalhes de IP
+- `2_🔗_Hash_Analysis.py`: Busca informações para hashes MD5/SHA1/SHA256
+- `3_🌐_Domain_Analysis.py`: Avalia domínios e possíveis indicadores
+- `4_📋_Blocklists.py`: Administra listas de bloqueio locais
+- `5_⚙️_Settings.py`: Configura suas chaves de API e testa conectividade
+
+
+## 🔌 Serviços integrados
+
+- VirusTotal (`services/virustotal.py`)
+- AbuseIPDB (`services/abuseipdb.py`)
+- Shodan (`services/shodan.py`)
+- IPinfo (`services/ipinfo.py`)
+- GreyNoise (`services/greynoise.py`)
+- IPQualityScore (`services/ipqualityscore.py`)
+
+## ❗ Observações importantes
+
+- O arquivo de configuração é persistido em `data/config.json` (gerado automaticamente)
+- Variáveis de ambiente via `.env` são carregadas com `python-dotenv`
+- Em ambientes Windows PowerShell, use os comandos acima exatamente como mostrados
+
+## 🛠️ Troubleshooting
+
+- Logo não aparece ou quebra:
+  - Verifique se o arquivo está em `assets` e use um dos nomes suportados
+  - Formatos aceitos: SVG, PNG, JPG/JPEG, WEBP
+- Erros ao testar APIs em "Configurações":
+  - Confirme chaves válidas e conectividade de rede
+  - Consulte os serviços correspondentes em `services/`
+
+
+## 🤝 Contribuição
+
+Contribuições são bem-vindas! Abra uma issue ou envie um pull request.
