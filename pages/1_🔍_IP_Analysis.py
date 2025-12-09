@@ -10,6 +10,8 @@ from services.ipqualityscore import IPQualityScoreService
 from utils.validators import validate_ip
 from styles.theme import get_common_styles, get_sidebar_logo_html
 import time
+import json
+from pathlib import Path
 
 # -------------------------------------------------------------------
 # CONFIG STREAMLIT
@@ -155,6 +157,21 @@ shodan_service = ShodanService(config["shodan_api_key"]) if config.get("shodan_a
 greynoise_service = GreyNoiseService(config["greynoise_api_key"]) if config.get("greynoise_api_key") else None
 ipqualityscore_service = IPQualityScoreService(config["ipqualityscore_api_key"]) if config.get("ipqualityscore_api_key") else None
 
+BLOCKLIST_FILE = Path("data/blocklists.json")
+
+def get_blocklist_entry(value: str, list_key: str):
+    try:
+        data = json.loads(BLOCKLIST_FILE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    normalized = value.lower() if list_key != "ips" else value
+    for entry in data.get(list_key, []):
+        entry_value = entry.get("value", "")
+        compare_value = entry_value.lower() if list_key != "ips" else entry_value
+        if compare_value == normalized:
+            return entry
+    return None
+
 # -------------------------------------------------------------------
 # HEADER / SHELL DA PÁGINA
 # -------------------------------------------------------------------
@@ -274,6 +291,19 @@ def render_ip_result(ip_value, ip_data):
         status_class = "status-ok"
 
     st.markdown(f"### 📌 Resultado para **`{ip_value}`**")
+
+    block_entry = get_blocklist_entry(ip_value, "ips")
+    if block_entry:
+        st.markdown(
+            f"""
+            <div class="alert-section" style="border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08);">
+                <div class="alert-title">🚫 IP presente na blocklist</div>
+                <div class="pill-alert pill-abuse">Motivo: {block_entry.get('reason', 'Sem motivo')}</div>
+                <div class="ip-helper">Adicionado por {block_entry.get('added_by', 'N/A')} em {block_entry.get('added_at', '')[:10]}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # CARDS PRINCIPAIS
     col1, col2, col3, col4 = st.columns(4)
@@ -473,7 +503,7 @@ if st.session_state.analyzed_ips:
                 render_ip_result(ip_value, ip_data)
 
     st.markdown("---")
-    if st.button("🗑️ Limpar análises", type="secondary", use_container_width=True):
+if st.button("🗑️ Limpar análises", type="secondary", use_container_width=True):
         st.session_state.analyzed_ips = {}
         st.rerun()
 else:

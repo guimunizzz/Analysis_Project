@@ -35,7 +35,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Configuração de arquivos
-BLOCKLIST_FILE = Path("data/blocklists. json")
+BLOCKLIST_FILE = Path("data/blocklists.json")
 BLOCKLIST_FILE.parent.mkdir(exist_ok=True)
 
 def load_blocklists():
@@ -43,7 +43,7 @@ def load_blocklists():
     if BLOCKLIST_FILE.exists():
         try:
             with open(BLOCKLIST_FILE, 'r') as f:
-                return json. load(f)
+                return json.load(f)
         except:
             return {'ips': [], 'hashes': [], 'domains': []}
     return {'ips': [], 'hashes': [], 'domains': []}
@@ -60,6 +60,11 @@ def save_blocklists(blocklists):
 
 def add_to_blocklist(blocklist_type: str, item: str, reason: str = ""):
     """Adiciona um item à lista de bloqueio"""
+    item = item.strip()
+    reason = reason.strip()
+    if not item:
+        return False
+
     blocklists = load_blocklists()
     
     new_entry = {
@@ -117,10 +122,6 @@ def export_blocklist(blocklist_type: str, format: str = 'txt'):
     
     return ""
 
-# Configuração de arquivos
-BLOCKLIST_FILE = Path("data/blocklists.json")
-BLOCKLIST_FILE.parent.mkdir(exist_ok=True)
-
 # Abas principais
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🔴 IPs Bloqueados",
@@ -155,7 +156,19 @@ with tab1:
             for entry in ip_blocklist
         ])
         
-        st.dataframe(df_ips, use_container_width=True)
+        filter_ip = st.text_input("Filtrar por IP ou motivo", key="ip_filter")
+        df_ips_to_show = df_ips
+        if filter_ip:
+            term = filter_ip.lower()
+            df_ips_to_show = df_ips[
+                df_ips.apply(
+                    lambda row: term in str(row['IP']).lower() or term in str(row['Motivo']).lower(),
+                    axis=1
+                )
+            ]
+            st.caption(f"{len(df_ips_to_show)} resultado(s) após filtro")
+        
+        st.dataframe(df_ips_to_show, use_container_width=True)
         
         # Opções de remoção
         st.markdown("---")
@@ -225,7 +238,19 @@ with tab2:
             for entry in hash_blocklist
         ])
         
-        st.dataframe(df_hashes, use_container_width=True)
+        filter_hash = st.text_input("Filtrar por hash ou motivo", key="hash_filter")
+        df_hashes_to_show = df_hashes
+        if filter_hash:
+            term = filter_hash.lower()
+            df_hashes_to_show = df_hashes[
+                df_hashes.apply(
+                    lambda row: term in str(row['Hash Completo']).lower() or term in str(row['Motivo']).lower(),
+                    axis=1
+                )
+            ]
+            st.caption(f"{len(df_hashes_to_show)} resultado(s) após filtro")
+        
+        st.dataframe(df_hashes_to_show, use_container_width=True)
         
         # Opções de remoção
         st.markdown("---")
@@ -286,7 +311,19 @@ with tab3:
             for entry in domain_blocklist
         ])
         
-        st.dataframe(df_domains, use_container_width=True)
+        filter_domain = st.text_input("Filtrar por domínio ou motivo", key="domain_filter")
+        df_domains_to_show = df_domains
+        if filter_domain:
+            term = filter_domain.lower()
+            df_domains_to_show = df_domains[
+                df_domains.apply(
+                    lambda row: term in str(row['Domínio']).lower() or term in str(row['Motivo']).lower(),
+                    axis=1
+                )
+            ]
+            st.caption(f"{len(df_domains_to_show)} resultado(s) após filtro")
+        
+        st.dataframe(df_domains_to_show, use_container_width=True)
         
         # Opções de remoção
         st. markdown("---")
@@ -341,55 +378,58 @@ with tab4:
         col1, col2 = st.columns([2, 1])
         with col1:
             ip_input = st.text_input("Digite o IP:")
+            ip_reason = st.text_input("Motivo do bloqueio:", key="ip_reason")
         with col2:
             st.write("")
             st.write("")
             if st.button("➕ Adicionar IP"):
-                if ip_input. strip():
-                    reason = st.text_input("Motivo do bloqueio (opcional):")
-                    if add_to_blocklist('ips', ip_input.strip(), reason):
-                        st.success(f"✅ IP {ip_input} adicionado à lista de bloqueio")
-                        st.rerun()
-                    else:
-                        st.warning(f"⚠️ IP {ip_input} já está na lista de bloqueio")
-                else:
+                if not ip_input.strip():
                     st.error("❌ Digite um IP válido")
+                elif not ip_reason.strip():
+                    st.warning("⚠️ Informe um motivo para o bloqueio")
+                elif add_to_blocklist('ips', ip_input.strip(), ip_reason.strip()):
+                    st.success(f"✅ IP {ip_input} adicionado à lista de bloqueio")
+                    st.rerun()
+                else:
+                    st.warning(f"⚠️ IP {ip_input} já está na lista de bloqueio")
     
     elif tipo_bloqueio == "Hash":
         col1, col2 = st.columns([2, 1])
         with col1:
             hash_input = st.text_input("Digite o hash (MD5, SHA1 ou SHA256):")
+            hash_reason = st.text_input("Motivo do bloqueio:", key="hash_reason_single")
         with col2:
             st.write("")
             st.write("")
             if st.button("➕ Adicionar Hash"):
-                if hash_input.strip():
-                    reason = st.text_input("Motivo do bloqueio (opcional):", key="hash_reason")
-                    if add_to_blocklist('hashes', hash_input.strip(), reason):
-                        st. success(f"✅ Hash adicionado à lista de bloqueio")
-                        st.rerun()
-                    else:
-                        st.warning(f"⚠️ Hash já está na lista de bloqueio")
-                else:
+                if not hash_input.strip():
                     st.error("❌ Digite um hash válido")
+                elif not hash_reason.strip():
+                    st.warning("⚠️ Informe um motivo para o bloqueio")
+                elif add_to_blocklist('hashes', hash_input.strip(), hash_reason.strip()):
+                    st.success(f"✅ Hash adicionado à lista de bloqueio")
+                    st.rerun()
+                else:
+                    st.warning(f"⚠️ Hash já está na lista de bloqueio")
     
     elif tipo_bloqueio == "Domínio":
         col1, col2 = st. columns([2, 1])
         with col1:
             domain_input = st.text_input("Digite o domínio:")
+            domain_reason = st.text_input("Motivo do bloqueio:", key="domain_reason_single")
         with col2:
             st.write("")
             st.write("")
             if st.button("➕ Adicionar Domínio"):
-                if domain_input.strip():
-                    reason = st.text_input("Motivo do bloqueio (opcional):", key="domain_reason")
-                    if add_to_blocklist('domains', domain_input.strip(), reason):
-                        st.success(f"✅ Domínio {domain_input} adicionado à lista de bloqueio")
-                        st.rerun()
-                    else:
-                        st.warning(f"⚠️ Domínio {domain_input} já está na lista de bloqueio")
-                else:
+                if not domain_input.strip():
                     st.error("❌ Digite um domínio válido")
+                elif not domain_reason.strip():
+                    st.warning("⚠️ Informe um motivo para o bloqueio")
+                elif add_to_blocklist('domains', domain_input.strip(), domain_reason.strip()):
+                    st.success(f"✅ Domínio {domain_input} adicionado à lista de bloqueio")
+                    st.rerun()
+                else:
+                    st.warning(f"⚠️ Domínio {domain_input} já está na lista de bloqueio")
     
     # Adicionar em lote
     st.markdown("---")
@@ -531,6 +571,31 @@ with tab5:
                     st. success(f"✅ {added}/{len(items)} itens importados com sucesso")
                     st.rerun()
     
+    st.markdown("---")
+    st.subheader("🔎 Busca rápida nas blocklists")
+    global_query = st.text_input(
+        "Busque por valor ou motivo em todas as listas:",
+        key="blocklist_global_search"
+    )
+    if global_query:
+        results = []
+        term = global_query.lower()
+        for item_type, items in blocklists.items():
+            for item in items:
+                value = item.get('value', '')
+                reason = item.get('reason', '')
+                if term in value.lower() or term in reason.lower():
+                    results.append({
+                        "Tipo": item_type.rstrip('s').upper(),
+                        "Valor": value,
+                        "Motivo": reason or "Sem motivo",
+                        "Adicionado Em": item.get('added_at', '')[:10]
+                    })
+        if results:
+            st.dataframe(pd.DataFrame(results), use_container_width=True)
+        else:
+            st.info("ℹ️ Nenhum resultado para o termo informado.")
+
     # Estatísticas Gerais
     st.markdown("---")
     st.subheader("📊 Estatísticas Gerais das Listas")

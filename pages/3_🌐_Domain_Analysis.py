@@ -6,6 +6,8 @@ from utils.parsers import TextParser
 from utils.formatters import ResultFormatter
 from styles.theme import get_common_styles, get_sidebar_logo_html
 import time
+import json
+from pathlib import Path
 
 st.set_page_config(page_title="Análise de Domínio", page_icon="🌐", layout="wide")
 
@@ -118,6 +120,20 @@ if not config.get('virustotal_api_key'):
     st.stop()
 
 vt_service = VirusTotalService(config['virustotal_api_key'])
+
+BLOCKLIST_FILE = Path("data/blocklists.json")
+
+def get_blocklist_entry(value: str, list_key: str):
+    try:
+        data = json.loads(BLOCKLIST_FILE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    normalized = value.lower()
+    for entry in data.get(list_key, []):
+        entry_value = entry.get('value', '')
+        if entry_value.lower() == normalized:
+            return entry
+    return None
 
 # Inicializar session state
 if 'analyzed_domains' not in st.session_state:
@@ -236,6 +252,22 @@ def render_domain_result(domain, result):
             </div>
         </div>
     """, unsafe_allow_html=True)
+
+    block_entry = get_blocklist_entry(domain, "domains")
+    if block_entry:
+        st.markdown(
+            f"""
+            <div class="domain-result-card malicious">
+                <div class="domain-header">
+                    🚫 Domínio na blocklist
+                    <span class="domain-status-badge status-malicious">Bloqueado</span>
+                </div>
+                <p style="margin:0; color:#fca5a5;">Motivo: {block_entry.get('reason', 'Sem motivo')}</p>
+                <p style="margin:4px 0 0 0; color:#9ca3af; font-size: 12px;">Adicionado por {block_entry.get('added_by', 'N/A')} em {block_entry.get('added_at', '')[:10]}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     
     # Métricas em cards
     col1, col2, col3, col4 = st.columns(4)
