@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import json
+from pathlib import Path
 from config.settings import load_config
 from services.virustotal import VirusTotalService
 from utils.parsers import TextParser
@@ -89,6 +91,22 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# Blocklist helpers
+BLOCKLIST_FILE = Path("data/blocklists.json")
+
+def get_blocklist_entry(value: str, blocklist_type: str):
+    if not BLOCKLIST_FILE.exists():
+        return None
+    try:
+        with open(BLOCKLIST_FILE, "r") as f:
+            blocklists = json.load(f)
+        for entry in blocklists.get(blocklist_type, []):
+            if entry.get("value") == value:
+                return entry
+    except Exception:
+        return None
+    return None
 
 # Add sidebar logo
 with st.sidebar:
@@ -236,6 +254,19 @@ def render_domain_result(domain, result):
             </div>
         </div>
     """, unsafe_allow_html=True)
+    
+    block_entry = get_blocklist_entry(domain, "domains")
+    if block_entry:
+        st.markdown(
+            f"""
+            <div class="card">
+                <div class="card-label">Lista de Bloqueio</div>
+                <div class="card-value status-bad">Bloqueado</div>
+                <div class="card-sub">Motivo: {block_entry.get('reason', 'Sem motivo informado')}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     
     # Métricas em cards
     col1, col2, col3, col4 = st.columns(4)

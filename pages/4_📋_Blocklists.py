@@ -34,16 +34,12 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Configuração de arquivos
-BLOCKLIST_FILE = Path("data/blocklists. json")
-BLOCKLIST_FILE.parent.mkdir(exist_ok=True)
-
 def load_blocklists():
     """Carrega listas de bloqueio do arquivo"""
     if BLOCKLIST_FILE.exists():
         try:
             with open(BLOCKLIST_FILE, 'r') as f:
-                return json. load(f)
+                return json.load(f)
         except:
             return {'ips': [], 'hashes': [], 'domains': []}
     return {'ips': [], 'hashes': [], 'domains': []}
@@ -55,7 +51,7 @@ def save_blocklists(blocklists):
             json.dump(blocklists, f, indent=2)
         return True
     except Exception as e:
-        logger. error(f"Erro ao salvar listas de bloqueio: {str(e)}")
+        logger.error(f"Erro ao salvar listas de bloqueio: {str(e)}")
         return False
 
 def add_to_blocklist(blocklist_type: str, item: str, reason: str = ""):
@@ -341,12 +337,12 @@ with tab4:
         col1, col2 = st.columns([2, 1])
         with col1:
             ip_input = st.text_input("Digite o IP:")
+            reason = st.text_input("Motivo do bloqueio (opcional):", key="ip_reason")
         with col2:
             st.write("")
             st.write("")
             if st.button("➕ Adicionar IP"):
-                if ip_input. strip():
-                    reason = st.text_input("Motivo do bloqueio (opcional):")
+                if ip_input.strip():
                     if add_to_blocklist('ips', ip_input.strip(), reason):
                         st.success(f"✅ IP {ip_input} adicionado à lista de bloqueio")
                         st.rerun()
@@ -359,14 +355,14 @@ with tab4:
         col1, col2 = st.columns([2, 1])
         with col1:
             hash_input = st.text_input("Digite o hash (MD5, SHA1 ou SHA256):")
+            reason = st.text_input("Motivo do bloqueio (opcional):", key="hash_reason")
         with col2:
             st.write("")
             st.write("")
             if st.button("➕ Adicionar Hash"):
                 if hash_input.strip():
-                    reason = st.text_input("Motivo do bloqueio (opcional):", key="hash_reason")
                     if add_to_blocklist('hashes', hash_input.strip(), reason):
-                        st. success(f"✅ Hash adicionado à lista de bloqueio")
+                        st.success(f"✅ Hash adicionado à lista de bloqueio")
                         st.rerun()
                     else:
                         st.warning(f"⚠️ Hash já está na lista de bloqueio")
@@ -377,12 +373,12 @@ with tab4:
         col1, col2 = st. columns([2, 1])
         with col1:
             domain_input = st.text_input("Digite o domínio:")
+            reason = st.text_input("Motivo do bloqueio (opcional):", key="domain_reason")
         with col2:
             st.write("")
             st.write("")
             if st.button("➕ Adicionar Domínio"):
                 if domain_input.strip():
-                    reason = st.text_input("Motivo do bloqueio (opcional):", key="domain_reason")
                     if add_to_blocklist('domains', domain_input.strip(), reason):
                         st.success(f"✅ Domínio {domain_input} adicionado à lista de bloqueio")
                         st.rerun()
@@ -545,6 +541,23 @@ with tab5:
     
     total_items = sum(len(blocklists.get(key, [])) for key in ['ips', 'hashes', 'domains'])
     st.info(f"📈 Total de itens na lista de bloqueio: **{total_items}**")
+    
+    # Motivos mais frequentes
+    st.markdown("---")
+    st.subheader("📝 Motivos mais frequentes")
+    reason_counts = {}
+    for items in blocklists.values():
+        for item in items:
+            label = item.get('reason') or 'Sem motivo informado'
+            reason_counts[label] = reason_counts.get(label, 0) + 1
+    
+    if reason_counts:
+        df_reasons = pd.DataFrame(
+            [{'Motivo': reason, 'Quantidade': count} for reason, count in reason_counts.items()]
+        ).sort_values('Quantidade', ascending=False)
+        st.dataframe(df_reasons, use_container_width=True)
+    else:
+        st.info("ℹ️ Ainda não há motivos registrados nas listas.")
     
     # Itens mais recentes
     st.markdown("---")

@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import json
+from pathlib import Path
 from config.settings import load_config
 from services.virustotal import VirusTotalService
 from utils.validators import validate_hash
@@ -137,8 +139,24 @@ st.markdown("""
         border: 1px solid #e5e7eb;
         font-size: 13px;
     }
-    </style>
+</style>
 """, unsafe_allow_html=True)
+
+# Blocklist helpers
+BLOCKLIST_FILE = Path("data/blocklists.json")
+
+def get_blocklist_entry(value: str, blocklist_type: str):
+    if not BLOCKLIST_FILE.exists():
+        return None
+    try:
+        with open(BLOCKLIST_FILE, "r") as f:
+            blocklists = json.load(f)
+        for entry in blocklists.get(blocklist_type, []):
+            if entry.get("value") == value:
+                return entry
+    except Exception:
+        return None
+    return None
 
 # Add sidebar logo
 with st.sidebar:
@@ -292,6 +310,19 @@ def render_hash_result(hash_value, hash_data):
             <div class="hash-header">{hash_value}</div>
         </div>
     """, unsafe_allow_html=True)
+    
+    block_entry = get_blocklist_entry(hash_value, "hashes")
+    if block_entry:
+        st.markdown(
+            f"""
+            <div class="card">
+                <div class="card-label">Lista de Bloqueio</div>
+                <div class="card-value status-bad">Bloqueado</div>
+                <div class="card-sub">Motivo: {block_entry.get('reason', 'Sem motivo informado')}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     
     # Se não houver erro, mostrar detalhes
     if result.get('status') not in ['error', 'not_found']:
