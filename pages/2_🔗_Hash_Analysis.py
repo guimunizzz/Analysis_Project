@@ -384,7 +384,7 @@ def render_hash_result(hash_value, hash_data):
         with file_info_col2:
             size = result.get('size', 'N/A')
             if isinstance(size, int):
-                size = f"{size / 1024:.2f} KB" if size < 1024*1024 else f"{size / (1024*1024):. 2f} MB"
+                size = f"{size / 1024:.2f} KB" if size < 1024*1024 else f"{size / (1024*1024):.2f} MB"
             st.metric("Tamanho", size)
         
         with file_info_col3:
