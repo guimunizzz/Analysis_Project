@@ -172,6 +172,9 @@ def get_blocklist_entry(value: str, list_key: str):
             return entry
     return None
 
+# Add sidebar logo
+with st.sidebar:
+    st.markdown(get_sidebar_logo_html(), unsafe_allow_html=True)
 # -------------------------------------------------------------------
 # HEADER / SHELL DA PÁGINA
 # -------------------------------------------------------------------
