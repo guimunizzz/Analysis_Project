@@ -53,16 +53,12 @@ def main():
         else:
             st.success("✅ APIs configuradas")
         
-        # Links para as páginas
-        st.markdown("---")
-        st.markdown("### Ferramentas")
         
         pages = {
             "🔍 Análise de IP": "ip_analysis",
             "🔗 Análise de Hash": "hash_analysis",
             "🌐 Análise de Domínio": "domain_analysis",
             "📋 Listas de Bloqueio": "blocklists",
-            "⚙️ Configurações": "settings"
         }
     
     # Conteúdo principal
@@ -128,12 +124,6 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
-            <div class="card">
-                <div class="card-label">🌐 Análise de Domínio</div>
-                <div class="card-sub">Investigar domínios e URLs maliciosos</div>
-            </div>
-        """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
@@ -145,8 +135,8 @@ def main():
         
         st.markdown("""
             <div class="card">
-                <div class="card-label">⚙️ Configurações</div>
-                <div class="card-sub">Adicionar suas chaves de API para integração</div>
+                <div class="card-label">🌐 Análise de Domínio</div>
+                <div class="card-sub">Investigar domínios e URLs maliciosos</div>
             </div>
         """, unsafe_allow_html=True)
 
